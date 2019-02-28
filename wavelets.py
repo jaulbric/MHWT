@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import math
 import numpy as np
+import numpy.ma as ma
 from scipy import ndimage
 import multiprocessing as mp
 
@@ -25,24 +26,32 @@ class wavelets:
 		width = 2.*truncate*np.sqrt((xsize*xsize*np.cos(angle)*np.cos(angle)) + (ysize*ysize*np.sin(angle)*np.sin(angle)))
 		height = 2.*truncate*np.sqrt((xsize*xsize*np.sin(angle)*np.sin(angle)) + (ysize*ysize*np.cos(angle)*np.cos(angle)))
 		return np.ceil(width), np.ceil(height)
-
+	
+	def threshold(self,a,threshmin=None,threshmax=None,newval=0.):
+		a = ma.array(a, copy=True)
+		mask = np.zeros(a.shape, dtype=bool)
+		if threshmin is not None:
+			mask |= (a < threshmax).filled(False)
+		if threshmax is not None:
+			mask |= (a > threshmax).filled(False)
+		a[mask] = newval
+		return a
+	
 	def detect_local_maxima(self, arr, threshold=2, mask=None):
 		"""Finds local maximum in arrays above a specified threshold"""
-		import scipy.stats as stats
-	
 		if not isinstance(arr,np.ndarray):
 			arr = np.asarray(arr)
 
 		neighborhood = ndimage.morphology.generate_binary_structure(len(arr.shape),2)
 	
-		data = stats.threshold(arr, threshmin=threshold, newval=0)
+		data = self.threshold(arr, threshmin=threshold, newval=0)
 	
 		local_max = (ndimage.filters.maximum_filter(data, footprint=neighborhood)==data)
 		background = (data==0)
 	
 		eroded_background = ndimage.morphology.binary_erosion(background, structure=neighborhood, border_value=1)
 	
-		detected_maxima = local_max - eroded_background
+		detected_maxima = np.bitwise_xor(local_max, eroded_background)
 	
 		if mask is None:
 			return np.where(detected_maxima), detected_maxima
