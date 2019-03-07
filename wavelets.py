@@ -177,8 +177,9 @@ if __name__ == "__main__":
 	w = wavelets(multiprocessing=True)
 
 	# Create some test data
+	scale = 3.0
 	x,y = np.meshgrid(np.linspace(-499.5,499.5,num=1000),np.linspace(-499.5,499.5,num=1000))
-	data = np.random.poisson(lam=10.0,size=(1000,1000)) + (10.*np.exp(- (x**2/6.) - (y**2/6.)))
+	data = np.random.poisson(lam=10.0,size=(1000,1000)) + (10.*np.exp(- (x**2/(2.*scale*scale)) - (y**2/(2.*scale*scale))))
 	
 	sigma = np.arange(1.5,4.0,0.05) # Array of scales. Could also specify an array of shape (2,n) where n is the number of scales and each row corrosponds to the horizontal scale and vertical scale.
 	
